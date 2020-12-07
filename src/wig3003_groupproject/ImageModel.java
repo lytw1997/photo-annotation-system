@@ -5,19 +5,30 @@
  */
 package wig3003_groupproject;
 
+import java.awt.image.BufferedImage;
+import java.io.File;
+
 /**
  *
  * @author lytw1
  */
 public class ImageModel {
     private String fileName;
-    private byte[] imageByteArray;
+    private File imageFile;
+    private BufferedImage image;
     private String annotation;
     private int isAnnotated;
 
-    public ImageModel(String fileName, byte[] imageByteArray, String annotation, int isAnnotated) {
+    public ImageModel(String fileName, File imageFile, String annotation, int isAnnotated) {
         this.fileName = fileName;
-        this.imageByteArray = imageByteArray;
+        this.imageFile = imageFile;
+        this.annotation = annotation;
+        this.isAnnotated = isAnnotated;
+    }
+    
+    public ImageModel(String fileName, BufferedImage image, String annotation, int isAnnotated) {
+        this.fileName = fileName;
+        this.image = image;
         this.annotation = annotation;
         this.isAnnotated = isAnnotated;
     }
@@ -30,12 +41,20 @@ public class ImageModel {
         this.fileName = fileName;
     }
 
-    public byte[] getImageByteArray() {
-        return imageByteArray;
+    public File getImageFile() {
+        return imageFile;
     }
 
-    public void setImageByteArray(byte[] imageByteArray) {
-        this.imageByteArray = imageByteArray;
+    public void setImageFile(File imageFile) {
+        this.imageFile = imageFile;
+    }
+
+    public BufferedImage getImage() {
+        return image;
+    }
+
+    public void setImage(BufferedImage imageBytes) {
+        this.image = image;
     }
 
     public String getAnnotation() {
@@ -46,13 +65,12 @@ public class ImageModel {
         this.annotation = annotation;
     }
 
-    public int isIsAnnotated() {
+    public int getIsAnnotated() {
         return isAnnotated;
     }
 
     public void setIsAnnotated(int isAnnotated) {
         this.isAnnotated = isAnnotated;
     }
-    
-    
+
 }

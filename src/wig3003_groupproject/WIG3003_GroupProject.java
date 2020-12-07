@@ -20,19 +20,19 @@ public class WIG3003_GroupProject extends Application {
     
     @Override
     public void start(Stage stage) throws Exception {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("FXMLDocument.fxml"));
-//        Parent root = FXMLLoader.load(getClass().getResource("FXMLDocument.fxml"));
-        Parent root = loader.load();
-        FXMLDocumentController controller = loader.getController();
+//        FXMLLoader loader = new FXMLLoader(getClass().getResource("FXMLDocument.fxml"));
+        Parent root = FXMLLoader.load(getClass().getResource("Main.fxml"));
+//        Parent root = loader.load();
+//        FXMLDocumentController controller = loader.getController();
         DatabaseHelper db = DatabaseHelper.getInstance();
         if(db.getConn() == null) {
             System.exit(1);
         }
         System.out.println(db.getConn());
         db.createTable();
-        controller.setupStage(stage);
+//        controller.setupStage(stage);
         Scene scene = new Scene(root);
-        
+        stage.setTitle("Photo Annotation Collection");
         stage.setScene(scene);
         stage.show();
     }
