@@ -10,13 +10,13 @@
 
 <fx:root fx:id="ImageItemContainer" onMouseClicked="#SelectImage" type="javafx.scene.layout.StackPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
    <children>
-      <VBox alignment="CENTER" spacing="10.0">
+      <VBox fx:id="ImageItemVBox" alignment="CENTER" spacing="10.0">
          <children>
-            <ImageView fx:id="ImageItemIV" fitHeight="200.0" pickOnBounds="true" preserveRatio="true">
-               <VBox.margin>
-                  <Insets />
-               </VBox.margin>
-            </ImageView>
+            <StackPane fx:id="ImageItemStackPane" VBox.vgrow="ALWAYS">
+               <children>
+                  <ImageView fx:id="ImageItemIV" pickOnBounds="true" preserveRatio="true" />
+               </children>
+            </StackPane>
             <Label fx:id="ImageItemFilenameLB" text="Filename" />
          </children>
          <StackPane.margin>

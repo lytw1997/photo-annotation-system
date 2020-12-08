@@ -5,7 +5,6 @@
  */
 package wig3003_groupproject;
 
-import java.sql.Connection;
 import javafx.application.Application;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;

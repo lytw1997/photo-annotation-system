@@ -6,7 +6,6 @@
 package wig3003_groupproject;
 
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -17,7 +16,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javafx.embed.swing.SwingFXUtils;
-import javafx.event.EventType;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
@@ -28,7 +26,6 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javax.imageio.ImageIO;
 

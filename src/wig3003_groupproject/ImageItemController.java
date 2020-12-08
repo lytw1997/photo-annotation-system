@@ -5,15 +5,8 @@
  */
 package wig3003_groupproject;
 
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -21,8 +14,6 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
-import javax.imageio.ImageIO;
 
 /**
  * FXML Controller class
