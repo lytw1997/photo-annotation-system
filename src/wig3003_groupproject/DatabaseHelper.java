@@ -104,7 +104,7 @@ public class DatabaseHelper {
                 BufferedImage imageBuff = ImageIO.read(imageStream);
                 String  annotation = rs.getString(ANNOTATION);
                 int isAnnotated = rs.getInt(ISANNOTATED);
-                imageList.add(new ImageModel(filename, imageBuff, annotation, isAnnotated));
+                imageList.add(new ImageModel(id, filename, imageBuff, annotation, isAnnotated));
              }
             System.out.println("Read successfully");
             rs.close();
@@ -119,6 +119,37 @@ public class DatabaseHelper {
             System.exit(0);
             return null;
         }
+    }
+    
+    public void updateImage(ImageModel image) {
+        try {
+            String query = "UPDATE " + TABLE_NAME + " SET " + FILENAME + " = ?, " + ANNOTATION + " = ?, " + ISANNOTATED + " = ? WHERE " + ID + " = ?"; 
+            PreparedStatement stmt = conn.prepareStatement(query);  
+            stmt.setString(1, image.getFileName());
+            stmt.setString(2, image.getAnnotation());
+            stmt.setInt(3, image.getIsAnnotated());
+            stmt.setInt(4, image.getId());
+            stmt.executeUpdate();
+            System.out.println("Update successfully");
+            stmt.close();
+        } catch(SQLException e) {
+            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+            System.exit(0);
+        } 
+    }
+    
+    public void deleteImage(int id) {
+        try {
+            String query = "DELETE FROM " + TABLE_NAME + " WHERE " + ID + " = ?";
+            PreparedStatement stmt = conn.prepareStatement(query); 
+            stmt.setInt(1, id);
+            stmt.executeUpdate();
+            System.out.println("Delete successfully");
+            stmt.close();
+        } catch(SQLException e) {
+            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+            System.exit(0);
+        } 
     }
     
     public boolean isDbConnected(){

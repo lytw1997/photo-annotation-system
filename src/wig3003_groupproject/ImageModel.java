@@ -13,6 +13,7 @@ import java.io.File;
  * @author lytw1
  */
 public class ImageModel {
+    private int id;
     private String fileName;
     private File imageFile;
     private BufferedImage image;
@@ -26,11 +27,20 @@ public class ImageModel {
         this.isAnnotated = isAnnotated;
     }
     
-    public ImageModel(String fileName, BufferedImage image, String annotation, int isAnnotated) {
+    public ImageModel(int id, String fileName, BufferedImage image, String annotation, int isAnnotated) {
+        this.id = id;
         this.fileName = fileName;
         this.image = image;
         this.annotation = annotation;
         this.isAnnotated = isAnnotated;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getFileName() {

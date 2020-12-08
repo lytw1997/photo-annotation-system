@@ -35,38 +35,46 @@ public class ImageItemController extends StackPane{
     private StackPane ImageItemContainer;
     
     @FXML
-    private VBox ImageBox; 
+    private ImageView ImageItemIV;
     
     @FXML
-    private ImageView ImageItemIV;
+    private ImageView IsAnnotatedIV;
     
     @FXML
     private Label ImageItemFilenameLB; 
     
-    public ImageItemController(ImageModel image, double containerWidth, double containerHeight) {
+    private MainController mainController;
+    
+    private ImageModel image;
+    
+    public ImageItemController(ImageModel image, double containerWidth, double containerHeight, MainController mainController) {
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("ImageItem.fxml"));
         fxmlLoader.setRoot(this);
         fxmlLoader.setController(this);
         try {
             fxmlLoader.load();
+            
         } catch (IOException exception) {
             throw new RuntimeException(exception);
         }
+        this.image = image;
+        this.mainController = mainController;
         ImageItemContainer.setPrefSize(containerWidth, containerHeight);
-//        ImageItemIV.fitWidthProperty().bind(ImageItemContainer.widthProperty());
-//        ImageItemIV.fitHeightProperty().bind(ImageItemContainer.heightProperty());
-        double imageWidth = image.getImage().getWidth();
-        double imageHeight = image.getImage().getHeight();
-        if (imageWidth > containerWidth && imageHeight > containerHeight) {
-            ImageItemIV.fitWidthProperty().bind(ImageItemContainer.widthProperty());
-            ImageItemIV.fitHeightProperty().bind(ImageItemContainer.heightProperty());
-        } else if (imageWidth > containerWidth && imageHeight < containerHeight) {
-            ImageItemIV.fitWidthProperty().bind(ImageItemContainer.widthProperty());
-        } else if (imageWidth < containerWidth && imageHeight > containerHeight) {
-            ImageItemIV.fitHeightProperty().bind(ImageItemContainer.heightProperty());
-        }
+        ImageItemIV.setFitWidth(ImageItemContainer.getPrefWidth());
         ImageItemIV.setImage(SwingFXUtils.toFXImage(image.getImage(), null));
         ImageItemFilenameLB.setText(image.getFileName());
+        if(this.image.getIsAnnotated() > 0) {
+            IsAnnotatedIV.setFitWidth(containerWidth * 0.3);
+            IsAnnotatedIV.setFitHeight(containerWidth * 0.3);
+            File file = new File("src/assests/sign.png");
+            IsAnnotatedIV.setImage(new Image(file.toURI().toString()));
+            IsAnnotatedIV.setVisible(true);
+        }
+        
     }
     
+    @FXML
+    private void SelectImage() {
+        mainController.SelectImage(this.image);
+    }
 }
