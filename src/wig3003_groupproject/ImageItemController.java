@@ -61,7 +61,6 @@ public class ImageItemController extends StackPane{
             IsAnnotatedIV.setImage(new Image(file.toURI().toString()));
             IsAnnotatedIV.setVisible(true);
         }
-        
     }
     
     @FXML

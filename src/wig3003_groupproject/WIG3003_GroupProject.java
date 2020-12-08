@@ -25,6 +25,7 @@ public class WIG3003_GroupProject extends Application {
 //        Parent root = FXMLLoader.load(getClass().getResource("Main.fxml"));
         Parent root = loader.load();
         MainController controller = loader.getController();
+        controller.setStage(stage);
         DatabaseHelper db = DatabaseHelper.getInstance();
         if(db.getConn() == null) {
             System.exit(1);
