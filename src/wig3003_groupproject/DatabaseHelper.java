@@ -116,7 +116,6 @@ public class DatabaseHelper {
         stmt.executeUpdate();
         System.out.println("Delete successfully");
         stmt.close();
-//            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
     }
     
     public boolean isDbConnected(){

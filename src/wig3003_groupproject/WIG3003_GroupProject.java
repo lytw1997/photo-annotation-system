@@ -21,6 +21,7 @@ public class WIG3003_GroupProject extends Application {
     
     @Override
     public void start(Stage stage) throws Exception {
+        System.out.println("--> Start: " + Thread.currentThread().getName());
         FXMLLoader loader = new FXMLLoader(getClass().getResource("Main.fxml"));
 //        Parent root = FXMLLoader.load(getClass().getResource("Main.fxml"));
         Parent root = loader.load();
@@ -32,15 +33,18 @@ public class WIG3003_GroupProject extends Application {
         }
         System.out.println(db.getConn());
         db.createTable();
-        stage.setOnShown(new EventHandler<WindowEvent>() {
+        Scene scene = new Scene(root);
+        stage.setOnShown(new EventHandler<WindowEvent> () {
+            @Override
             public void handle(WindowEvent event) {
-                controller.setImages();
+                System.out.println("setuplisterner");
+                controller.setListener();
             }
         });
-        Scene scene = new Scene(root);
         stage.setTitle("Photo Annotation Collection");
         stage.setScene(scene);
         stage.show();
+        
     }
 
     /**

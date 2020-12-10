@@ -51,7 +51,7 @@ public class ToastController extends HBox {
     
     public ToastController(Stage stage) {
         parentStage = stage;
-        toastStage=new Stage();
+        toastStage = new Stage();
         toastStage.initOwner(stage);
         toastStage.initStyle(StageStyle.TRANSPARENT);
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("Toast.fxml"));
@@ -100,6 +100,7 @@ public class ToastController extends HBox {
                 new Thread(){
                     public void run() {
                         try {
+                            System.out.println("--> Toast: " + Thread.currentThread().getName());
                             Thread.sleep(1000);
                         } catch (InterruptedException ex) {
                             Logger.getLogger(ToastController.class.getName()).log(Level.SEVERE, null, ex);

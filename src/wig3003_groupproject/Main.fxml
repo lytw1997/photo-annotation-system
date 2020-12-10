@@ -5,6 +5,7 @@
 <?import javafx.scene.control.*?>
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.collections.*?>
 
 <GridPane fx:id="ParentPane" hgap="10.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="720.0" prefWidth="1280.0" vgap="10.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="wig3003_groupproject.MainController">
   <columnConstraints>
@@ -51,11 +52,20 @@
       </VBox>
       <VBox fx:id="VBox" spacing="10.0" GridPane.columnIndex="1">
          <children>
-            <TextField fx:id="SearchImageTF" promptText="Search">
-               <VBox.margin>
-                  <Insets />
-               </VBox.margin>
-            </TextField>
+            <HBox alignment="CENTER" spacing="10.0">
+               <children>
+                  <TextField fx:id="SearchImageTF" promptText="Search" HBox.hgrow="ALWAYS" />
+                  <ChoiceBox fx:id="DisplayModeCB" value="Filename">
+                      <items>
+                        <FXCollections fx:factory="observableArrayList">
+                          <String fx:value="Filename" />
+                          <String fx:value="Annotation" />
+                        </FXCollections>
+                      </items>
+                  </ChoiceBox>
+                  <CheckBox fx:id="AnnotatedModeCB" allowIndeterminate="true" indeterminate="true" mnemonicParsing="false" onAction="#ChangeAnnotatedMode" text="Annotated" />
+               </children>
+            </HBox>
             <ScrollPane fx:id="ScrollPane" fitToWidth="true" hbarPolicy="NEVER" pannable="true" VBox.vgrow="ALWAYS">
                <VBox.margin>
                   <Insets />

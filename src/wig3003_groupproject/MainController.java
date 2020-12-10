@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
@@ -19,10 +20,18 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
+import javafx.concurrent.WorkerStateEvent;
 import javafx.embed.swing.SwingFXUtils;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
@@ -41,16 +50,17 @@ import javax.imageio.ImageIO;
 public class MainController implements Initializable {
     
     @FXML
+    private GridPane ParentPane;
+    @FXML
     private TextField ImagePathTF;
     @FXML
     private TextField ImageFilenameTF;
     @FXML
-    private TextArea AnnotationTA;
-    
-    @FXML
     private StackPane ImageViewContainer; 
     @FXML
     private ImageView ImageIV;
+    @FXML
+    private TextArea AnnotationTA;
     
     @FXML
     private Button ButtonUpload;
@@ -63,15 +73,21 @@ public class MainController implements Initializable {
     
     @FXML
     private TextField SearchImageTF;
+    @FXML
+    private ChoiceBox DisplayModeCB;
+    @FXML
+    private CheckBox AnnotatedModeCB;
     
     @FXML
     private FlowPane ImageListContainer;
-    @FXML
-    private GridPane ParentPane;
+    
     
     private Stage stage;
     private boolean isEditing;
-    private List<ImageModel> imageList;
+    private String filter = "";
+    private String displayMode;
+    private String annotatedMode;
+    private ObservableList<ImageModel> imageList = FXCollections.observableArrayList();;
     private File choosenImgFile = null;
     private ImageModel choosenImg = null;
     private double imageWidth = 0;
@@ -81,17 +97,24 @@ public class MainController implements Initializable {
     static final String ERROR = "error";
     static final String WARNING = "warning"; 
     
+    static final String DISPLAY_FN = "Filename";
+    static final String DISPLAY_AT = "Annotation";
+    
+    private final String INDETERMINATE = "indeterminate";
+    private final String CHECKED = "checked";
+    private final String UNCHECKED = "unchecked";
+    
+    private ProgressDialogController pDController;
+    Thread setImageThread;
+    
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        try {
-            this.imageList = DatabaseHelper.getInstance().readImages();
-        } catch (SQLException | IOException ex) {
-            ToastController.getInstance(stage).showToast(ERROR, ex.getClass().getName() + ": " + ex.getMessage());
-            Logger.getLogger(MainController.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        this.isEditing = false;
+        isEditing = false;
+        displayMode = DISPLAY_FN;
+        annotatedMode = INDETERMINATE;
         SearchImageTF.textProperty().addListener((observable, oldValue, newValue) -> {
-            filterImages(newValue);
+            filter = newValue;
+            filterImages(filter);
         });
         ParentPane.widthProperty().addListener(new ChangeListener<Number>() {
             @Override
@@ -114,36 +137,84 @@ public class MainController implements Initializable {
             }
             
         });
+        pDController = new ProgressDialogController(stage);
     }
     
     public void setStage(Stage stage) {
         this.stage = stage;
     }
     
-    private void filterImages(String filter) {
-        if(filter.isEmpty()) {
-            setImages();
+    public void setListener() {
+        imageList.addListener(new ListChangeListener<ImageModel>() {
+            @Override
+            public void onChanged(ListChangeListener.Change<? extends ImageModel> change) {
+                System.out.println("-->List Change: " + Thread.currentThread().getName());
+                filterImages(filter);
+            }
+        });
+        try {
+            System.out.println("-->First Read: " + Thread.currentThread().getName());
+            List<ImageModel> imageListDB = DatabaseHelper.getInstance().readImages();
+            imageList.addAll(imageListDB);
+        } catch (SQLException | IOException ex) {
+            ToastController.getInstance(stage).showToast(ERROR, ex.getClass().getName() + ": " + ex.getMessage());
+            Logger.getLogger(MainController.class.getName()).log(Level.SEVERE, null, ex);
         }
-        List<ImageModel> filteredImageList = imageList.stream().filter(image -> image.getFileName().toLowerCase().contains(filter.toLowerCase())).collect(Collectors.toList());
+        DisplayModeCB.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+                displayMode = newValue;
+                filterImages(filter);
+            }
+        });
+    }
+    
+    @FXML
+    private void ChangeAnnotatedMode() {
+        if(AnnotatedModeCB.isIndeterminate()) {
+            annotatedMode = INDETERMINATE;
+        } else if(AnnotatedModeCB.isSelected()) {
+            annotatedMode = CHECKED;
+        } else if(!AnnotatedModeCB.isSelected()) {
+            annotatedMode = UNCHECKED;
+        }
+        filterImages(filter);
+    }
+    
+    private void filterImages(String filter) {
+        List<ImageModel> filteredImageList = new ArrayList<>();
+        if(displayMode.equals(DISPLAY_FN) && annotatedMode.equals(INDETERMINATE)) {
+            filteredImageList = imageList.stream().filter(image -> image.getFileName().toLowerCase().contains(filter.toLowerCase())).collect(Collectors.toList());
+        } else if(displayMode.equals(DISPLAY_AT) && annotatedMode.equals(INDETERMINATE)) {
+            filteredImageList = imageList.stream().filter(image -> image.getAnnotation().toLowerCase().contains(filter.toLowerCase())).collect(Collectors.toList());
+        } else if(displayMode.equals(DISPLAY_FN) && annotatedMode.equals(CHECKED)) {
+            filteredImageList = imageList.stream().filter(image -> image.getFileName().toLowerCase().contains(filter.toLowerCase()) && !image.getAnnotation().isEmpty()).collect(Collectors.toList());
+        } else if(displayMode.equals(DISPLAY_AT) && annotatedMode.equals(CHECKED)) {
+            filteredImageList = imageList.stream().filter(image -> image.getAnnotation().toLowerCase().contains(filter.toLowerCase()) && !image.getAnnotation().isEmpty()).collect(Collectors.toList());
+        } else if(displayMode.equals(DISPLAY_FN) && annotatedMode.equals(UNCHECKED)) {
+            filteredImageList = imageList.stream().filter(image -> image.getFileName().toLowerCase().contains(filter.toLowerCase()) && image.getAnnotation().isEmpty()).collect(Collectors.toList());
+        } else if(displayMode.equals(DISPLAY_AT) && annotatedMode.equals(UNCHECKED)) {
+            filteredImageList = imageList.stream().filter(image -> image.getAnnotation().toLowerCase().contains(filter.toLowerCase()) && image.getAnnotation().isEmpty()).collect(Collectors.toList());
+        }
         setImages(filteredImageList);
     }
     
     public void setImages() {
-        double width = ImageListContainer.getWidth() - 70;
-        double height = ImageListContainer.getHeight();
+        System.out.println("--> Set Images: " + Thread.currentThread().getName());
+        double width = ImageListContainer.getWidth() - 80;
         ImageListContainer.getChildren().clear();
         for(ImageModel image: imageList) {
-            ImageListContainer.getChildren().add(new ImageItemController(image, width/5, height/3, this));
-        }
+            ImageListContainer.getChildren().add(new ImageItemController(image, width/5, this, displayMode));
+        }  
     }
     
     public void setImages(List<ImageModel> filteredImageList) {
-        double width = ImageListContainer.getWidth() - 70;
-        double height = ImageListContainer.getHeight();
+        System.out.println("--> Set Images: " + Thread.currentThread().getName());
+        double width = ImageListContainer.getWidth() - 80;
         ImageListContainer.getChildren().clear();
         for(ImageModel image: filteredImageList) {
-            ImageListContainer.getChildren().add(new ImageItemController(image, width/5, height/3, this));
-        }
+            ImageListContainer.getChildren().add(new ImageItemController(image, width/5, this, displayMode));
+        }  
     }
     
     public void SelectImage(ImageModel image) {
@@ -160,10 +231,30 @@ public class MainController implements Initializable {
         fileChooser.setTitle("Choose Image File");
         choosenImgFile = fileChooser.showOpenDialog(null);
         if(choosenImgFile != null) {
-            isEditing = false;
-            ButtonSave.setText("Save");
-            ButtonRemove.setDisable(true);
-            setImageIV();
+            pDController.showProgressDialog(stage.getX(), stage.getY(),ParentPane.getWidth(), ParentPane.getHeight());
+            Task<Void> setImageTask = new Task<Void>() {
+                @Override
+                protected Void call() throws Exception {
+                    System.out.println("--> Upload: " + Thread.currentThread().getName());
+                    ImageIV.setImage(null);
+                    isEditing = false;
+                    ButtonSave.setText("Save");
+                    ButtonRemove.setDisable(true);
+                    setImageIV();
+                    return null;
+                }
+            };
+            setImageThread = new Thread(setImageTask);
+            setImageThread.start();
+            setImageTask.setOnSucceeded(new EventHandler<WorkerStateEvent>() {
+                @Override
+                public void handle(WorkerStateEvent workerStateEvent) {
+                    setImageThread = null;
+                    pDController.hideProgressDialog();
+                    System.out.println("--> Upload Done: " + Thread.currentThread().getName());
+                    AnnotationTA.requestFocus();
+                }
+            });
         }
     }
     
@@ -213,9 +304,8 @@ public class MainController implements Initializable {
             try {
                 url = choosenImgFile.toURI().toURL();
                 ImagePathTF.setText(choosenImgFile.getAbsolutePath());
-                ImageFilenameTF.setText(choosenImgFile.getName());
+                ImageFilenameTF.setText(choosenImgFile.getName().substring(0, choosenImgFile.getName().lastIndexOf('.')));
                 ImageIV.setImage(new Image(url.toExternalForm()));
-                AnnotationTA.requestFocus();
             } catch (MalformedURLException ex) {
                 ToastController.getInstance(stage).showToast(ERROR, ex.getClass().getName() + ": " + ex.getMessage());
                 Logger.getLogger(MainController.class.getName()).log(Level.SEVERE, null, ex);
@@ -232,6 +322,7 @@ public class MainController implements Initializable {
     
     @FXML
     private void clearImage() {
+        System.out.println("--> Clear: " + Thread.currentThread().getName());
         isEditing = false;
         choosenImgFile = null;
         choosenImg = null;
@@ -286,6 +377,7 @@ public class MainController implements Initializable {
                 Logger.getLogger(MainController.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
+        clearImage();
         updateImageList();
     }
     
@@ -298,21 +390,22 @@ public class MainController implements Initializable {
         try {
             DatabaseHelper.getInstance().deleteImage(choosenImg.getId());
             ToastController.getInstance(stage).showToast(SUCCESS, "Deleted successfully.");
+            clearImage();
+            updateImageList();
         } catch (SQLException ex) {
             ToastController.getInstance(stage).showToast(ERROR, ex.getClass().getName() + ": " + ex.getMessage());
             Logger.getLogger(MainController.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        updateImageList();
+        }   
     }
     
     private void updateImageList() {
         try {
-            imageList = DatabaseHelper.getInstance().readImages();
+            System.out.println("--> Read: " + Thread.currentThread().getName());
+            List<ImageModel> imageListDB = DatabaseHelper.getInstance().readImages();
+            imageList.setAll(imageListDB);
         } catch (SQLException | IOException ex) {
             ToastController.getInstance(stage).showToast(ERROR, ex.getClass().getName() + ": " + ex.getMessage());
             Logger.getLogger(MainController.class.getName()).log(Level.SEVERE, null, ex);
         }
-        setImages();
-        clearImage();
     }
 }
