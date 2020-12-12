@@ -5,14 +5,12 @@
  */
 package wig3003_groupproject;
 
-import java.io.File;
 import java.io.IOException;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 
@@ -32,52 +30,43 @@ public class ImageItemController extends StackPane{
     @FXML
     private Label ImageItemLB; 
     
-    private MainController mainController;
+    private final MainController mainController;
     
-    private ImageModel image;
+    private final ImageModel image;
     
-    public ImageItemController(ImageModel image, double containerWidth, MainController mainController, String displayMode) {
+    public ImageItemController(ImageModel image, double containerWidth, MainController mainController, String displayMode) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("ImageItem.fxml"));
-        fxmlLoader.setRoot(this);
-        fxmlLoader.setController(this);
-        try {
-            fxmlLoader.load();
-            
-        } catch (IOException exception) {
-            throw new RuntimeException(exception);
-        }
+        fxmlLoader.setRoot(ImageItemController.this);
+        fxmlLoader.setController(ImageItemController.this);
+        fxmlLoader.load();
         this.image = image;
         this.mainController = mainController;
         ImageItemContainer.setPrefWidth(containerWidth);
         ImageItemIV.setFitWidth(ImageItemContainer.getPrefWidth());
         ImageItemIV.setImage(SwingFXUtils.toFXImage(image.getImage(), null));
-        if(displayMode.equals(MainController.DISPLAY_FN)) {
-            ImageItemLB.setText(image.getFileName());
-            Tooltip tooltip = new Tooltip(image.getFileName());
+        Tooltip tooltip = null;
+        switch (displayMode) {
+            case MainController.DISPLAY_FN:
+                ImageItemLB.setText(image.getFileName());
+                tooltip = new Tooltip(image.getFileName());
+                break;
+            case MainController.DISPLAY_AT:
+                if(image.getAnnotation().isEmpty() || image.getAnnotation() == null) {
+                    ImageItemLB.setText("No Annotation");
+                    tooltip = new Tooltip("Null");
+                }   if(!image.getAnnotation().isEmpty()){
+                    ImageItemLB.setText(image.getAnnotation());
+                    tooltip = new Tooltip(image.getAnnotation());
+            }   break;
+        }
+        if(tooltip != null) {
             tooltip.setWrapText(true);
             tooltip.setPrefWidth(containerWidth);
             Tooltip.install(ImageItemContainer, tooltip);
-        } else if(displayMode.equals(MainController.DISPLAY_AT)) {
-            if(image.getAnnotation().isEmpty() || image.getAnnotation() == null) {
-                ImageItemLB.setText("No Annotation");
-                Tooltip tooltip = new Tooltip("Null");
-                tooltip.setWrapText(true);
-                tooltip.setPrefWidth(containerWidth);
-                Tooltip.install(ImageItemContainer, tooltip);
-            } 
-            if(!image.getAnnotation().isEmpty()){
-                ImageItemLB.setText(image.getAnnotation());
-                Tooltip tooltip = new Tooltip(image.getAnnotation());
-                tooltip.setWrapText(true);
-                tooltip.setPrefWidth(containerWidth);
-                Tooltip.install(ImageItemContainer, tooltip);
-            }
         }
         if(this.image.getIsAnnotated() > 0) {
             IsAnnotatedIV.setFitWidth(containerWidth * 0.3);
             IsAnnotatedIV.setFitHeight(containerWidth * 0.3);
-            File file = new File("src/assests/sign.png");
-            IsAnnotatedIV.setImage(new Image(file.toURI().toString()));
             IsAnnotatedIV.setVisible(true);
         }
     }

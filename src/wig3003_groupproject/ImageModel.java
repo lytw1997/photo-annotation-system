@@ -63,7 +63,7 @@ public class ImageModel {
         return image;
     }
 
-    public void setImage(BufferedImage imageBytes) {
+    public void setImage(BufferedImage image) {
         this.image = image;
     }
 

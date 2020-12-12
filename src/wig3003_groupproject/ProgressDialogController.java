@@ -6,8 +6,6 @@
 package wig3003_groupproject;
 
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -24,25 +22,21 @@ import javafx.stage.StageStyle;
  */
 public class ProgressDialogController extends AnchorPane{
 
-    private Stage parentStage;
-    private Stage progressDialogStage;
-    private Parent root;
-    private Scene scene;
+    private final Stage parentStage;
+    private final Stage progressDialogStage;
+    private final Parent root;
+    private final Scene scene;
     
-    public ProgressDialogController(Stage stage) {
+    public ProgressDialogController(Stage stage) throws IOException {
         parentStage = stage;
         progressDialogStage = new Stage();
         progressDialogStage.initOwner(stage);
         progressDialogStage.initStyle(StageStyle.TRANSPARENT);
         progressDialogStage.initModality(Modality.APPLICATION_MODAL);
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("ProgressDialog.fxml"));
-        fxmlLoader.setRoot(this);
-        fxmlLoader.setController(this);
-        try {
-            root = fxmlLoader.load();
-        } catch (IOException ex) {
-            Logger.getLogger(ProgressDialogController.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        fxmlLoader.setRoot(ProgressDialogController.this);
+        fxmlLoader.setController(ProgressDialogController.this);
+        root = fxmlLoader.load();
         scene = new Scene(root);
         scene.setFill(Color.TRANSPARENT);
         progressDialogStage.setResizable(false);

@@ -18,6 +18,7 @@ import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -26,7 +27,6 @@ import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.concurrent.WorkerStateEvent;
 import javafx.embed.swing.SwingFXUtils;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
@@ -87,7 +87,7 @@ public class MainController implements Initializable {
     private String filter = "";
     private String displayMode;
     private String annotatedMode;
-    private ObservableList<ImageModel> imageList = FXCollections.observableArrayList();;
+    private final ObservableList<ImageModel> imageList = FXCollections.observableArrayList();
     private File choosenImgFile = null;
     private ImageModel choosenImg = null;
     private double imageWidth = 0;
@@ -116,28 +116,28 @@ public class MainController implements Initializable {
             filter = newValue;
             filterImages(filter);
         });
-        ParentPane.widthProperty().addListener(new ChangeListener<Number>() {
-            @Override
-            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-                double changedWidth = newValue.doubleValue()/2 - 20;
-                if(imageWidth >= changedWidth) {
-                    ImageIV.fitWidthProperty().unbind();
-                    ImageIV.setFitWidth(changedWidth);
-                }
+        ParentPane.widthProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> {
+            double changedWidth = newValue.doubleValue()/2 - 20;
+            if(imageWidth >= changedWidth) {
+                ImageIV.fitWidthProperty().unbind();
+                ImageIV.setFitWidth(changedWidth);
             }
         });
-        ParentPane.heightProperty().addListener(new ChangeListener<Number>() {
-            @Override
-            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-                double changedHeight = newValue.doubleValue() * 0.55;
-                if(imageHeight >= changedHeight){
-                    ImageIV.fitHeightProperty().unbind();
-                    ImageIV.setFitHeight(changedHeight);
-                }
+        ParentPane.heightProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> {
+            double changedHeight = newValue.doubleValue() * 0.55;
+            if(imageHeight >= changedHeight){
+                ImageIV.fitHeightProperty().unbind();
+                ImageIV.setFitHeight(changedHeight);
             }
-            
         });
-        pDController = new ProgressDialogController(stage);
+        try {
+            pDController = new ProgressDialogController(stage);
+        } catch (IOException ex) {
+            Platform.runLater(() -> {
+                ToastController.getInstance(stage).showToast(ERROR, ex.getClass().getName() + ": " + ex.getMessage());
+            });
+            Logger.getLogger(MainController.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
     
     public void setStage(Stage stage) {
@@ -145,17 +145,15 @@ public class MainController implements Initializable {
     }
     
     public void setListener() {
-        imageList.addListener(new ListChangeListener<ImageModel>() {
-            @Override
-            public void onChanged(ListChangeListener.Change<? extends ImageModel> change) {
-                System.out.println("-->List Change: " + Thread.currentThread().getName());
+        imageList.addListener((ListChangeListener.Change<? extends ImageModel> change) -> {
+            System.out.println("-->List Change: " + Thread.currentThread().getName());
+            Platform.runLater(() -> {
                 filterImages(filter);
-            }
+            });
         });
         try {
             System.out.println("-->First Read: " + Thread.currentThread().getName());
-            List<ImageModel> imageListDB = DatabaseHelper.getInstance().readImages();
-            imageList.addAll(imageListDB);
+            imageList.addAll(DatabaseHelper.getInstance().readImages());
         } catch (SQLException | IOException ex) {
             ToastController.getInstance(stage).showToast(ERROR, ex.getClass().getName() + ": " + ex.getMessage());
             Logger.getLogger(MainController.class.getName()).log(Level.SEVERE, null, ex);
@@ -199,22 +197,22 @@ public class MainController implements Initializable {
         setImages(filteredImageList);
     }
     
-    public void setImages() {
-        System.out.println("--> Set Images: " + Thread.currentThread().getName());
-        double width = ImageListContainer.getWidth() - 80;
-        ImageListContainer.getChildren().clear();
-        for(ImageModel image: imageList) {
-            ImageListContainer.getChildren().add(new ImageItemController(image, width/5, this, displayMode));
-        }  
-    }
-    
     public void setImages(List<ImageModel> filteredImageList) {
         System.out.println("--> Set Images: " + Thread.currentThread().getName());
         double width = ImageListContainer.getWidth() - 80;
-        ImageListContainer.getChildren().clear();
-        for(ImageModel image: filteredImageList) {
-            ImageListContainer.getChildren().add(new ImageItemController(image, width/5, this, displayMode));
-        }  
+        Platform.runLater(() -> {
+            ImageListContainer.getChildren().clear();
+            filteredImageList.stream().forEach((ImageModel image) -> {
+                try {
+                    ImageListContainer.getChildren().add(new ImageItemController(image, width/5, MainController.this, displayMode));
+                } catch (IOException ex) {
+                    Platform.runLater(() -> {
+                        ToastController.getInstance(stage).showToast(ERROR, ex.getClass().getName() + ": " + ex.getMessage());
+                    });
+                    Logger.getLogger(MainController.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            });
+        });
     }
     
     public void SelectImage(ImageModel image) {
@@ -246,14 +244,11 @@ public class MainController implements Initializable {
             };
             setImageThread = new Thread(setImageTask);
             setImageThread.start();
-            setImageTask.setOnSucceeded(new EventHandler<WorkerStateEvent>() {
-                @Override
-                public void handle(WorkerStateEvent workerStateEvent) {
-                    setImageThread = null;
-                    pDController.hideProgressDialog();
-                    System.out.println("--> Upload Done: " + Thread.currentThread().getName());
-                    AnnotationTA.requestFocus();
-                }
+            setImageTask.setOnSucceeded((WorkerStateEvent workerStateEvent) -> {
+                setImageThread = null;
+                pDController.hideProgressDialog();
+                System.out.println("--> Upload Done: " + Thread.currentThread().getName());
+                AnnotationTA.requestFocus();
             });
         }
     }
@@ -268,15 +263,17 @@ public class MainController implements Initializable {
     private void setImageIV() {
         setupImageViewContainer();
         if(!isEditing) {
-            BufferedImage choosenBuffImg = null;
             try {
-                choosenBuffImg = ImageIO.read(choosenImgFile);
+                BufferedImage choosenBuffImg = ImageIO.read(choosenImgFile);
+                imageWidth = choosenBuffImg.getWidth();
+                imageHeight = choosenBuffImg.getHeight();
             } catch (IOException ex) {
-                ToastController.getInstance(stage).showToast(ERROR, ex.getClass().getName() + ": " + ex.getMessage());
+                Platform.runLater(() -> {
+                    ToastController.getInstance(stage).showToast(ERROR, ex.getClass().getName() + ": " + ex.getMessage());
+                });
                 Logger.getLogger(MainController.class.getName()).log(Level.SEVERE, null, ex);
             }
-            imageWidth = choosenBuffImg.getWidth();
-            imageHeight = choosenBuffImg.getHeight();
+            
         } else {
             imageWidth = choosenImg.getImage().getWidth();
             imageHeight = choosenImg.getImage().getHeight();
@@ -307,7 +304,9 @@ public class MainController implements Initializable {
                 ImageFilenameTF.setText(choosenImgFile.getName().substring(0, choosenImgFile.getName().lastIndexOf('.')));
                 ImageIV.setImage(new Image(url.toExternalForm()));
             } catch (MalformedURLException ex) {
-                ToastController.getInstance(stage).showToast(ERROR, ex.getClass().getName() + ": " + ex.getMessage());
+                Platform.runLater(() -> {
+                    ToastController.getInstance(stage).showToast(ERROR, ex.getClass().getName() + ": " + ex.getMessage());
+                });
                 Logger.getLogger(MainController.class.getName()).log(Level.SEVERE, null, ex);
             }
         } else {
@@ -399,13 +398,19 @@ public class MainController implements Initializable {
     }
     
     private void updateImageList() {
-        try {
-            System.out.println("--> Read: " + Thread.currentThread().getName());
-            List<ImageModel> imageListDB = DatabaseHelper.getInstance().readImages();
-            imageList.setAll(imageListDB);
-        } catch (SQLException | IOException ex) {
-            ToastController.getInstance(stage).showToast(ERROR, ex.getClass().getName() + ": " + ex.getMessage());
-            Logger.getLogger(MainController.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        new Thread() {
+            @Override
+            public void run() {
+                try {
+                    System.out.println("--> Read: " + Thread.currentThread().getName());
+                    imageList.setAll(DatabaseHelper.getInstance().readImages());
+                } catch (SQLException | IOException ex) {
+                    Platform.runLater(() -> {
+                        ToastController.getInstance(stage).showToast(ERROR, ex.getClass().getName() + ": " + ex.getMessage());
+                    });
+                    Logger.getLogger(MainController.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }.start();
     }
 }

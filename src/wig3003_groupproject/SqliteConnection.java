@@ -21,10 +21,7 @@ public class SqliteConnection {
             Class.forName("org.sqlite.JDBC");
             Connection conn = DriverManager.getConnection("jdbc:sqlite:" + dbName + ".db");
             return conn;
-        } catch (ClassNotFoundException ex) {
-            Logger.getLogger(SqliteConnection.class.getName()).log(Level.SEVERE, null, ex);
-            return null;
-        } catch (SQLException ex) {
+        } catch (ClassNotFoundException | SQLException ex) {
             Logger.getLogger(SqliteConnection.class.getName()).log(Level.SEVERE, null, ex);
             return null;
         }

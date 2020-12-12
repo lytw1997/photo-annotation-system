@@ -27,6 +27,9 @@
          <StackPane.margin>
             <Insets right="5.0" top="5.0" />
          </StackPane.margin>
+         <image>
+            <Image url="@../resources/sign.png" />
+         </image>
       </ImageView>
    </children>
 </fx:root>
