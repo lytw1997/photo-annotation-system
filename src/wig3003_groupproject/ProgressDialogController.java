@@ -20,39 +20,48 @@ import javafx.stage.StageStyle;
  *
  * @author lytw1
  */
+//  ProgressDialogController class to show progress indicator in an AnchorPane
 public class ProgressDialogController extends AnchorPane{
 
-    private final Stage parentStage;
+    //  Store dialog window in a local variable
     private final Stage progressDialogStage;
-    private final Parent root;
-    private final Scene scene;
     
+    //  Construtor for ProgressDialogController
     public ProgressDialogController(Stage stage) throws IOException {
-        parentStage = stage;
         progressDialogStage = new Stage();
+        
+        //  Setup parent window for progess dialog window
         progressDialogStage.initOwner(stage);
+        
+        //  Set the window background to transparent
         progressDialogStage.initStyle(StageStyle.TRANSPARENT);
+        
+        //  Make the modal window block parent window event
         progressDialogStage.initModality(Modality.APPLICATION_MODAL);
+        
+        //  Load the progress dialog fxml file and set the controller to the loader
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("ProgressDialog.fxml"));
         fxmlLoader.setRoot(ProgressDialogController.this);
         fxmlLoader.setController(ProgressDialogController.this);
-        root = fxmlLoader.load();
-        scene = new Scene(root);
+        Parent progressDialogRoot = fxmlLoader.load();
+        
+        //  Set the interface to scene
+        Scene scene = new Scene(progressDialogRoot);
         scene.setFill(Color.TRANSPARENT);
         progressDialogStage.setResizable(false);
+        
+        //  Set the scene to window
         progressDialogStage.setScene(scene);
     }
     
+    //  Show the progress dialog and position it to the center of the parent window
     public void showProgressDialog(double containerX, double containerY, double containerWidth, double containerHeight) {
         progressDialogStage.show();
         progressDialogStage.setX(containerX + containerWidth/2 - progressDialogStage.getWidth()/2 + 10);
         progressDialogStage.setY(containerY + containerHeight/2 - progressDialogStage.getHeight()/2);
     }
     
-    public Stage getDialogStage() {
-        return progressDialogStage;
-    }
-    
+    //  Close the progress dialog window
     public void hideProgressDialog() {
         progressDialogStage.close();
     }

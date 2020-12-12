@@ -15,7 +15,11 @@ import java.util.logging.Logger;
  *
  * @author lytw1
  */
+
+// Create SQLite database connection
 public class SqliteConnection {
+    
+    // Get database connection
     public static Connection connect(String dbName) {
         try {
             Class.forName("org.sqlite.JDBC");
